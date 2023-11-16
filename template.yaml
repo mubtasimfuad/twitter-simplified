@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "Simplified version of Twitter"
+
+Globals:
+  Function:
+    Timeout: 20
+    Runtime: python3.10
+    Environment:
+      Variables:
+        STAGE_NAME: !Ref StageName
+
+Parameters:
+  StageName:
+    Type: String
+    Default: "dev"
+
+Resources:
+  DefaultApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref StageName
+
+  CreateTweetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/lambdas/create_tweet.lambda_handler
+      CodeUri: .
+      Description: "Lambda function for creating a tweet"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+      Events:
+        CreateTweetEvent:
+          Type: Api
+          Properties:
+            Path: /tweets/create
+            Method: post
+            RestApiId: !Ref DefaultApi
+
+  GetUserTweetsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/lambdas/get_user_tweets.lambda_handler
+      CodeUri: .
+      Description: "Lambda function for getting user's tweets"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+      Events:
+        GetUserTweetsEvent:
+          Type: Api
+          Properties:
+            Path: /tweets/user
+            Method: get
+            RestApiId: !Ref DefaultApi
+
+  GetFollowersTweetsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/lambdas/get_followers_tweets.lambda_handler
+      CodeUri: .
+      Description: "Lambda function for getting tweets from user's followers"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+      Events:
+        GetFollowersTweetsEvent:
+          Type: Api
+          Properties:
+            Path: /tweets/followers
+            Method: get
+            RestApiId: !Ref DefaultApi
+
+  GetTweetsWithTagFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/lambdas/get_tweets_with_tag.lambda_handler
+      CodeUri: .
+      Description: "Lambda function for getting tweets with a certain tag"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+      Events:
+        GetTweetsWithTagEvent:
+          Type: Api
+          Properties:
+            Path: /tweets/tag
+            Method: get
+            RestApiId: !Ref DefaultApi
+
+  FollowUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/lambdas/follow_user.lambda_handler
+      CodeUri: .
+      Description: "Lambda function for following a user"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+      Events:
+        FollowUserEvent:
+          Type: Api
+          Properties:
+            Path: /follows/follow
+            Method: post
+            RestApiId: !Ref DefaultApi
+
+  UnfollowUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/lambdas/unfollow_user.lambda_handler
+      CodeUri: .
+      Description: "Lambda function for unfollowing a user"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+      Events:
+        UnfollowUserEvent:
+          Type: Api
+          Properties:
+            Path: /follows/unfollow
+            Method: post
+            RestApiId: !Ref DefaultApi
+
+  GetUserFollowersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/lambdas/get_user_followers.lambda_handler
+      CodeUri: .
+      Description: "Lambda function for getting user's followers"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - SecretsManagerReadWrite
+      Events:
+        GetUserFollowersEvent:
+          Type: Api
+          Properties:
+            Path: /follows/user
+            Method: get
+            RestApiId: !Ref DefaultApi
+
+Outputs:
+  DefaultApi:
+    Description: "API Gateway endpoint for Twitter features"
+    Value: !Sub "https://${DefaultApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
+    Export:
+      Name: DefaultApiURL
